@@ -48,15 +48,23 @@ Vst3ComponentHandlerProxyImpl::beginEdit(Steinberg::Vst::ParamID id) {
 tresult PLUGIN_API Vst3ComponentHandlerProxyImpl::performEdit(
     Steinberg::Vst::ParamID id,
     Steinberg::Vst::ParamValue valueNormalized) {
+    const YaComponentHandler::PerformEdit request{
+        .owner_instance_id = owner_instance_id(),
+        .id = id,
+        .value_normalized = valueNormalized};
+
+    // `send_mutually_recursive_message()` starts a thread for every call,
+    // which is too slow for plugins that call `performEdit()` for hundreds of
+    // parameters at once. See `vst3_no_mutual_recursion_perform_edit`.
+    if (bridge_.config().vst3_no_mutual_recursion_perform_edit) {
+        return bridge_.send_message(request);
+    }
+
     // HACK: Ardour/Mixbus will in some cases immediately call
     //       `IEditController::setParamNormalized()` after this `performEdit()`,
     //       so we need to be able to receive that
     //       `IEditController::setParamNormalized()` on the same thread.
-    return bridge_.send_mutually_recursive_message(
-        YaComponentHandler::PerformEdit{
-            .owner_instance_id = owner_instance_id(),
-            .id = id,
-            .value_normalized = valueNormalized});
+    return bridge_.send_mutually_recursive_message(request);
 }
 
 tresult PLUGIN_API

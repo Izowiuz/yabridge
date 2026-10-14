@@ -345,6 +345,12 @@ class Vst3Bridge : public HostBridge {
 
    public:
     /**
+     * The configuration for this instance of yabridge, for VST3 interface
+     * implementations that need to check an option.
+     */
+    const Configuration& config() const noexcept { return config_; }
+
+    /**
      * Send a callback message to the host return the response. This is a
      * shorthand for `sockets.plugin_host_callback_.send_message` for use in
      * VST3 interface implementations.

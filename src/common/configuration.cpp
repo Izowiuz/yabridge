@@ -132,6 +132,12 @@ Configuration::Configuration(const fs::path& config_path,
                 } else {
                     invalid_options.emplace_back(key);
                 }
+            } else if (key == "vst3_no_mutual_recursion_perform_edit") {
+                if (const auto parsed_value = value.as_boolean()) {
+                    vst3_no_mutual_recursion_perform_edit = parsed_value->get();
+                } else {
+                    invalid_options.emplace_back(key);
+                }
             } else {
                 unknown_options.emplace_back(key);
             }

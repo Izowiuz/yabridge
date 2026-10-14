@@ -142,6 +142,19 @@ class Configuration {
     bool vst3_prefer_32bit = false;
 
     /**
+     * Send `IComponentHandler::performEdit()` to the host directly instead of
+     * through `Vst3Bridge::send_mutually_recursive_message()`. That function
+     * starts a new thread for every call so that hosts like Ardour can call
+     * `IEditController::setParamNormalized()` while they handle the
+     * `performEdit()`. Starting a Win32 thread is slow under Wine, and plugins
+     * like Omnisphere 3 call `performEdit()` for every parameter when they load
+     * a patch, which freezes their editor for several seconds. With this option
+     * a host that calls back into the plugin from within `performEdit()` gets
+     * that call on another thread.
+     */
+    bool vst3_no_mutual_recursion_perform_edit = false;
+
+    /**
      * The path to the configuration file that was parsed.
      */
     std::optional<ghc::filesystem::path> matched_file;
@@ -183,6 +196,7 @@ class Configuration {
         s.value1b(hide_daw);
         s.value1b(editor_disable_host_scaling);
         s.value1b(vst3_prefer_32bit);
+        s.value1b(vst3_no_mutual_recursion_perform_edit);
 
         s.ext(matched_file, bitsery::ext::InPlaceOptional(),
               [](S& s, auto& v) { s.ext(v, bitsery::ext::GhcPath{}); });
